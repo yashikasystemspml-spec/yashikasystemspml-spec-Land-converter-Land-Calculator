@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yashika Systems - Premium Land Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .calculator-card {
+            background:#ffffff; color:#111827;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 { color: #16a34a; text-align: center; margin: 0; font-size: 24px; text-transform: uppercase; }
+        .datetime-display { text-align: center; font-size: 12px; color: #888; margin-bottom: 10px; }
+        h2 { font-size: 16px; color: #555; text-align: center; margin-bottom: 20px; }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .input-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus {
+            border-color: #16a34a;
+            outline: none;
+            background-color: #fcfaff;
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 12px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(118, 75, 162, 0.2);
+        }
+
+        .btn-main:active { transform: translateY(1px); }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-sec {
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 11px;
+            border: 2px solid #764ba2;
+            text-transform: uppercase;
+        }
+
+        .clear-btn { background: #fff; color: #16a34a; }
+        .pdf-btn { background: #28a745; border-color: #28a745; color: white; }
+
+        .entry-list-container {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 10px;
+            background: #fdfdfd;
+        }
+
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+        }
+
+        .entry-item:last-child { border-bottom: none; }
+        .remove-entry { color: #ff4d4d; cursor: pointer; font-weight: bold; padding: 0 5px; }
+
+        .results-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #16a34a;
+        }
+
+        .result-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+        .result-label { font-weight: 600; color: #555; }
+        .result-value { font-weight: bold; color: #16a34a; }
+
+        .brand-footer { text-align: center; margin-top: 20px; font-size: 10px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-card" id="calculator-content">
+        <h1>Yashika Systems</h1>
+        <div id="liveTime" class="datetime-display"></div>
+        <h2>Multi-Entry Land Calculator</h2>
+        
+        <div id="inputForm">
+            <div class="input-row">
+                <div class="input-group"><label>Hectares</label><input type="number" id="hectares" placeholder="0"></div>
+                <div class="input-group"><label>Acres</label><input type="number" id="acres" placeholder="0"></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>Cents</label><input type="number" id="cents" placeholder="0"></div>
+                <div class="input-group"><label>Sq. Feet</label><input type="number" id="sqFeet" placeholder="0"></div>
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+                <label>Square Meters</label>
+                <input type="number" id="sqMeters" placeholder="0">
+            </div>
+        </div>
+
+        <button class="btn-main" id="addButton" onclick="addEntry()">+ Add (Enter Key)</button>
+
+        <div id="listContainer" style="display:none;">
+            <div style="font-size: 12px; font-weight: bold; color: #16a34a; margin-bottom: 5px;">Saved Entries:</div>
+            <div class="entry-list-container" id="entryList"></div>
+        </div>
+
+        <div class="button-grid">
+            <button class="btn-sec clear-btn" onclick="clearAll()">Clear All</button>
+            <button class="btn-sec pdf-btn" onclick="downloadPDF()">Download PDF</button>
+        </div>
+
+        
+        <div class="results-section">
+            <div style="font-weight:bold;text-align:center;margin-bottom:10px;">LAST ENTRY CONVERTED VALUES</div>
+            <div class="result-row"><span class="result-label">Hectares:</span><span class="result-value" id="lastHec">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Acres:</span><span class="result-value" id="lastAcr">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Cents:</span><span class="result-value" id="lastCen">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Sq. Feet:</span><span class="result-value" id="lastSqF">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Sq. Meters:</span><span class="result-value" id="lastSqM">0.0000</span></div>
+        </div>
+
+        <div class="results-section">
+            <div style="font-weight: bold; text-align: center; margin-bottom: 10px; color: #333;">GRAND TOTALS</div>
+            <div class="result-row"><span class="result-label">Hectares:</span><span class="result-value" id="resHec">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Acres:</span><span class="result-value" id="resAcr">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Cents:</span><span class="result-value" id="resCen">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Sq. Feet:</span><span class="result-value" id="resSqF">0.0000</span></div>
+            <div class="result-row"><span class="result-label">Sq. Meters:</span><span class="result-value" id="resSqM">0.0000</span></div>
+        </div>
+
+        <div class="brand-footer">Powered by Yashika Systems</div>
+    </div>
+
+    <script>
+        let entries = [];
+
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('liveTime').innerText = now.toLocaleString('en-GB', options);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Keyboard Shortcut Logic
+        document.getElementById('inputForm').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addEntry();
+            }
+        });
+
+        function addEntry() {
+            const entry = {
+                hec: parseFloat(document.getElementById('hectares').value) || 0,
+                acr: parseFloat(document.getElementById('acres').value) || 0,
+                cen: parseFloat(document.getElementById('cents').value) || 0,
+                sqf: parseFloat(document.getElementById('sqFeet').value) || 0,
+                sqm: parseFloat(document.getElementById('sqMeters').value) || 0
+            };
+
+            // Don't add if all fields are empty
+            if (Object.values(entry).every(v => v === 0)) return;
+
+            
+entries.push(entry);
+
+// Last entry conversion display
+const hec = entry.hec + (entry.acr * 0.405) + (entry.cen * 0.00404686) + (entry.sqf * 0.0000092903) + (entry.sqm * 0.0001);
+const acr = entry.acr + (entry.hec * 2.47105) + (entry.cen * 0.01) + (entry.sqf * 0.0000229568) + (entry.sqm * 0.000247105);
+const cen = entry.cen + (entry.hec * 247.105) + (entry.acr * 100) + (entry.sqf / 435.6) + (entry.sqm * 100);
+const sqf = entry.sqf + (entry.hec * 107639.1) + (entry.acr * 43560) + (entry.cen * 435.6) + (entry.sqm * 10.7639);
+const sqm = entry.sqm + (entry.hec * 10000) + (entry.acr * 4046.86) + (entry.cen * 40.4686) + (entry.sqf * 0.092903);
+
+document.getElementById('lastHec').innerText = hec.toFixed(4);
+document.getElementById('lastAcr').innerText = acr.toFixed(4);
+document.getElementById('lastCen').innerText = cen.toFixed(4);
+document.getElementById('lastSqF').innerText = sqf.toFixed(4);
+document.getElementById('lastSqM').innerText = sqm.toFixed(4);
+
+            renderList();
+            calculateTotals();
+            
+            // Clear inputs and set focus back to first field
+            ['hectares', 'acres', 'cents', 'sqFeet', 'sqMeters'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('hectares').focus();
+        }
+
+        function removeEntry(index) {
+            entries.splice(index, 1);
+            renderList();
+            calculateTotals();
+        }
+
+        function renderList() {
+            const listDiv = document.getElementById('entryList');
+            const container = document.getElementById('listContainer');
+            listDiv.innerHTML = '';
+            
+            if (entries.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'block';
+
+            entries.forEach((e, i) => {
+                let textParts = [];
+                if(e.hec) textParts.push(`${e.hec} Hec`);
+                if(e.acr) textParts.push(`${e.acr} Acr`);
+                if(e.cen) textParts.push(`${e.cen} Cen`);
+                if(e.sqf) textParts.push(`${e.sqf} SqF`);
+                if(e.sqm) textParts.push(`${e.sqm} SqM`);
+
+                const row = document.createElement('div');
+                row.className = 'entry-item';
+                row.innerHTML = `<span>#${i+1}: ${textParts.join(', ')}</span><span class="remove-entry" onclick="removeEntry(${i})">×</span>`;
+                listDiv.appendChild(row);
+            });
+        }
+
+        function calculateTotals() {
+            let totalHec = 0, totalAcr = 0, totalCen = 0, totalSqF = 0, totalSqM = 0;
+
+            entries.forEach(e => {
+                totalHec += e.hec + (e.acr * 0.405) + (e.cen * 0.00404686) + (e.sqf * 0.0000092903) + (e.sqm * 0.0001);
+                totalAcr += e.acr + (e.hec * 2.47105) + (e.cen * 0.01) + (e.sqf * 0.0000229568) + (e.sqm * 0.000247105);
+                totalCen += e.cen + (e.hec * 247.105) + (e.acr * 100) + (e.sqf / 435.6) + (e.sqm * 100);
+                totalSqF += e.sqf + (e.hec * 107639.1) + (e.acr * 43560) + (e.cen * 435.6) + (e.sqm * 10.7639);
+                totalSqM += e.sqm + (e.hec * 10000) + (e.acr * 4046.86) + (e.cen * 40.4686) + (e.sqf * 0.092903);
+            });
+
+            document.getElementById('resHec').innerText = totalHec.toFixed(4);
+            document.getElementById('resAcr').innerText = totalAcr.toFixed(4);
+            document.getElementById('resCen').innerText = totalCen.toFixed(4);
+            document.getElementById('resSqF').innerText = totalSqF.toFixed(4);
+            document.getElementById('resSqM').innerText = totalSqM.toFixed(4);
+        }
+
+        function clearAll() {
+            entries = [];
+            renderList();
+            calculateTotals();
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('calculator-content');
+            const opt = {
+                margin: 0.3,
+                filename: `Land_Batch_Report_${new Date().getTime()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
